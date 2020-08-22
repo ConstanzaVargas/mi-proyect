@@ -1,15 +1,20 @@
-remotes::install_github("r-spatial/rgee")
-library(rgee)
-install.packages(rgee)
-#Solo es necesario una vez
-ee_install()
-Y
+#remotes::install_github("r-spatial/rgee")
 
-Y
+#Solo es necesario una vez
+#ee_install()
+#install.packages(rgee)
+
+#  CÓDIGOS PARA INSTALACIÓN
+#ee_clean_pyenv()  en caso de error   Remember that you can remove EARTHENGINE_PYTHON and EARTHENGINE_ENV using rgee::ee_clean_pyenv().
+# To activate this environment, use $ conda activate rgee o To deactivate an active environment, use $ conda desactivate
+# we recommend run ee_check() to perform a full check of all non-R dependencies.
 
 
 #Initialize Earth Engine
+
+
 library(rgee)
+ee_check()
 ee_Initialize()
 
 #Definir centro de la imagen
@@ -17,7 +22,9 @@ point = ee$Geometry$Point(c(-69.14696311910278,-54.18051554071887))
 
 Map$addLayer(point)
 Map$centerObject(point,12)
+Map$addLayer(point, name="Punto")
 
+#Crear poligono
 geometry = ee$Geometry$Polygon(
   coords = list(
     c(-69.19331169088012, -54.168458345642335),
@@ -27,8 +34,10 @@ geometry = ee$Geometry$Polygon(
 
 Map$addLayer(geometry)
 Map$addLayer(geometry, name="Poligono")
-Map$addLayer(point, name="Poligono")
 
+
+
+#Colección de imágenes
 S2_collection = ee$ImageCollection('COPERNICUS/S2_SR')$filterBounds(geometry)$sort('system:time_start', FALSE)
 S2_img = S2_collection$first()
 
@@ -39,6 +48,14 @@ S2_collection = ee$ImageCollection('COPERNICUS/S2_SR')$filterBounds(geometry)$so
 S2_collection_cloudfilt10 = S2_collection$filter(ee$Filter$lt('CLOUDY_PIXEL_PERCENTAGE',10))
 S2_img_filter = S2_collection_cloudfilt10$first()
 Map$addLayer(S2_img_filter, list(bands = c("B4","B3","B2"), min = 0, max = 3000), "imagen S2")
+
+
+#Capa Hansen
+ee.Image("UMD/hansen/global_forest_change_2019_v1_7") = 
+
+
+
+
 
 #funciones
 olaketal = function(x) {
@@ -89,5 +106,7 @@ Map$addLayer(S2_img_masked$select('NDVI'), ndviParams, "NDVI de coleccion")
 
 #le pongo sort para que sea la mas nueva, no funciono, error, 
 S2_collection_cloudfilt10_mask_ndvi = S2_collection_cloudfilt10_mask$map(getNDVI)
+
+
 
 
