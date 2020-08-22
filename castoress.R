@@ -14,88 +14,70 @@ library(rgee)
 ee_check()
 ee_Initialize()
 
-
-#Crear poligono
-geometry = ee$Geometry$Polygon(
-  coords = list(
-    c(-69.19863195483647, -54.29204353677915),
-    c(-69.19863195483647, -54.396909744850554),
-    c(-68.84363622729741, -54.396909744850554),
-    c(-68.84363622729741, -54.29204353677915)))
-
-Map$centerObject(geometry,9) #1 al 16, que tal cerca está el planeta a escala real
-Map$addLayer(geometry, name="Poligono")
+#Importar poligonos
+parrillar = ee$FeatureCollection("users/queenb/Parrillar_bonito") #Parillar_bonito$getInfo()
+la_paciencia = ee$FeatureCollection("users/practico1/la-paciencia")
 
 
-#Importar parrillar
-Parrillar_bonito = ee$FeatureCollection("users/queenb/Parrillar_bonito") #Parillar_bonito$getInfo()
-
-Map$addLayer(Parrillar_bonito)
+Map$addLayer(Parrillar_bonito, name="Parrillar")
 Map$centerObject(Parrillar_bonito,12)
 
+Map$addLayer(la_paciencia, name="La Paciencia")
+Map$centerObject(la_paciencia,9)
 
 #Importar hansen
-Hansen = ee$Image("UMD/hansen/global_forest_change_2019_v1_7")
-Map$addLayer(Hansen)
-
-
-#dirección
-dire <- "C:/Users/cathe/OneDrive/Documentos/Conni Práctica"
-setwd(dire)
-
-
-stack.despues<-stack("2017_03_65.tif")
-crs(stack.antes) #veo la proyecci?n del stack de bandas
-crs(stack.despues)
-
-#leer dem
-setwd("C:/Users/cathe/OneDrive - Universidad de Chile/Documentos/CONNI/Percepci?n Remota/T2/Carlos/dem")
-dem<-raster("DEM.tif")
-plot(dem)
-crs(dem)
+hansen = ee$Image("UMD/hansen/global_forest_change_2019_v1_7")
+Map$addLayer(Hansen$clip(la_paciencia), name="Capa Hansen en La Paciencia")
+Map$addLayer(Hansen$clip(la_paciencia), list(bands = c("lossyear","gain", "treecover2000"), min = 0, max = 19, name="Capa Hansen en La Paciencia"))
+bands: ['treecover2000'],
 
 
 
-
-
-#Definir centro de la imagen
-point = ee$Geometry$Point(c(-69.14696311910278,-54.18051554071887))
-
-Map$addLayer(point)
-Map$centerObject(point,12)
-Map$addLayer(point, name="Punto")
-
-#Crear poligono
-geometry = ee$Geometry$Polygon(
-  coords = list(
-    c(-69.19331169088012, -54.168458345642335),
-    c(-69.19331169088012, -54.21746902624868),
-    c(-69.13220024068481, -54.21746902624868),
-    c(-69.13220024068481, -54.168458345642335)))
-
-Map$addLayer(geometry)
-Map$addLayer(geometry, name="Poligono")
+min: 0,
+max: 100,
+palette: ['black', 'green']
 
 
 
-#Colección de imágenes
-S2_collection = ee$ImageCollection('COPERNICUS/S2_SR')$filterBounds(geometry)$sort('system:time_start', FALSE)
-S2_img = S2_collection$first()
+hansen$getInfo()
+
+hansen$bands[[1]]$id
+$bands[[4]]$id
+[1] "lossyear"
+
+
+
+
+treeCoverVisParam = {
+  bands: ['treecover2000'],
+  min: 0,
+  max: 100,
+  palette: ['black', 'green']
+}
+
+Map.addLayer(hansen, treeCoverVisParam, 'tree cover');
+
+var treeLossVisParam = {
+  bands: ['lossyear'],
+  min: 0,
+  max: 19,
+  palette: ['yellow', 'red']
+};
+Map.addLayer(hansen, treeLossVisParam, 'tree loss year');
+  
+
+# The eeObject argument must be an instance of one of ee$Image, ee$Geometry, ee$Feature, or ee$FeatureCollection.
+
+#list(bands = c("lossyear"), min = 0, max = 3000))
+
+
+#Available band names: [treecover2000, loss, gain, lossyear, 
+#first_b30, first_b40, first_b50, first_b70, last_b30, last_b40, last_b50, last_b70, datamask]
+
+
+
 
 Map$addLayer(S2_img$clip(geometry), list(bands = c("B8","B3","B2"), min = 0, max = 3000), "imagen S2")
-
-S2_collection = ee$ImageCollection('COPERNICUS/S2_SR')$filterBounds(geometry)$sort('system:time_start',FALSE)
-
-S2_collection_cloudfilt10 = S2_collection$filter(ee$Filter$lt('CLOUDY_PIXEL_PERCENTAGE',10))
-S2_img_filter = S2_collection_cloudfilt10$first()
-Map$addLayer(S2_img_filter, list(bands = c("B4","B3","B2"), min = 0, max = 3000), "imagen S2")
-
-
-#Capa Hansen
-ee.Image("UMD/hansen/global_forest_change_2019_v1_7") = 
-
-
-
 
 
 #funciones
@@ -104,50 +86,5 @@ olaketal = function(x) {
   return(suma)
 }
 olaketal(7)
-
-mascara_S2 = function (image) {
-  cloud_mask = image$select("MSK_CLDPRB")
-  cloud_mask_bin=cloud_mask$lte(1) #mascaras con 1% de probabilidad de nubes o más
-  apply_mask = image$updateMask(cloud_mask_bin)
-}
-
-
-S2_collection_cloudfilt10_mask = S2_collection_cloudfilt10$map(mascara_S2)
-S2_img_masked = S2_collection_cloudfilt10_mask$first()
-Map$addLayer(S2_img_masked, list(bands = c("B4","B3","B2"), min = 0, max = 3000), "imagen S2")
-
-S2_mosaic_masked = S2_collection_cloudfilt10_mask$mosaic()
-Map$addLayer(S2_mosaic_masked, list(bands = c("B4","B3","B2"), min = 0, max = 3000), "imagen S2")
-
-
-
-#Calcular NDVI para la imagen mosaico
-#(B8-B4)/(B8+B4)
-
-Map$addLayer(S2_mosaic_masked, list(bands = c("B4","B3","B2"), min = 0, max = 3000), "imagen S2")
-NDVI = S2_mosaic_masked$normalizedDifference(c("B8", "B4"))
-
-ndviParams <- list(palette = c(
-  "#d73027", "#f46d43", "#fdae61",
-  "#fee08b", "#d9ef8b", "#a6d96a",
-  "#66bd63", "#1a9850"
-))
-
-Map$addLayer(NDVI, ndviParams, "NDVI")
-
-
-#imagen enmascarada antes del mosaico, la de la mascara de nubes
-getNDVI <- function(image) {
-  image$normalizedDifference(c("B8", "B4"))$rename('NDVI')
-}
-
-S2_collection_cloudfilt10_mask_ndvi = S2_collection_cloudfilt10_mask$map(getNDVI)
-S2_img_masked = S2_collection_cloudfilt10_mask_ndvi$first()
-Map$addLayer(S2_img_masked$select('NDVI'), ndviParams, "NDVI de coleccion")
-
-#le pongo sort para que sea la mas nueva, no funciono, error, 
-S2_collection_cloudfilt10_mask_ndvi = S2_collection_cloudfilt10_mask$map(getNDVI)
-
-
 
 
