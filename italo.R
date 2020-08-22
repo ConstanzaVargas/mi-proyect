@@ -1,63 +1,3 @@
-#remotes::install_github("r-spatial/rgee")
-
-#Solo es necesario una vez
-#ee_install()
-# install.packages(rgee)
-# CÓDIGOS PARA INSTALACIÓN
-# ee_clean_pyenv()  en caso de error   Remember that you can remove EARTHENGINE_PYTHON and EARTHENGINE_ENV using rgee::ee_clean_pyenv().
-# To activate this environment, use $ conda activate rgee o To deactivate an active environment, use $ conda desactivate
-# we recommend run ee_check() to perform a full check of all non-R dependencies.
-
-
-#Initialize Earth Engine
-library(rgee)
-ee_check()
-ee_Initialize()
-
-
-#Crear poligono
-geometry = ee$Geometry$Polygon(
-  coords = list(
-    c(-69.19863195483647, -54.29204353677915),
-    c(-69.19863195483647, -54.396909744850554),
-    c(-68.84363622729741, -54.396909744850554),
-    c(-68.84363622729741, -54.29204353677915)))
-
-Map$centerObject(geometry,9) #1 al 16, que tal cerca está el planeta a escala real
-Map$addLayer(geometry, name="Poligono")
-
-
-#Importar parrillar
-Parrillar_bonito = ee$FeatureCollection("users/queenb/Parrillar_bonito") #Parillar_bonito$getInfo()
-
-Map$addLayer(Parrillar_bonito)
-Map$centerObject(Parrillar_bonito,12)
-
-
-#Importar hansen
-Hansen = ee$Image("UMD/hansen/global_forest_change_2019_v1_7")
-Map$addLayer(Hansen)
-
-
-#dirección
-dire <- "C:/Users/cathe/OneDrive/Documentos/Conni Práctica"
-setwd(dire)
-
-
-stack.despues<-stack("2017_03_65.tif")
-crs(stack.antes) #veo la proyecci?n del stack de bandas
-crs(stack.despues)
-
-#leer dem
-setwd("C:/Users/cathe/OneDrive - Universidad de Chile/Documentos/CONNI/Percepci?n Remota/T2/Carlos/dem")
-dem<-raster("DEM.tif")
-plot(dem)
-crs(dem)
-
-
-
-
-
 #Definir centro de la imagen
 point = ee$Geometry$Point(c(-69.14696311910278,-54.18051554071887))
 
@@ -93,16 +33,16 @@ Map$addLayer(S2_img_filter, list(bands = c("B4","B3","B2"), min = 0, max = 3000)
 
 #Capa Hansen
 ee.Image("UMD/hansen/global_forest_change_2019_v1_7") = 
-
-
-
-
-
-#funciones
-olaketal = function(x) {
-  suma = x+1
-  return(suma)
-}
+  
+  
+  
+  
+  
+  #funciones
+  olaketal = function(x) {
+    suma = x+1
+    return(suma)
+  }
 olaketal(7)
 
 mascara_S2 = function (image) {
